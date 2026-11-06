@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mira-7 — biped showroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="view" aria-hidden="true"></canvas>
+    <div id="vignette"></div>
+    <header>
+      <p class="kicker-static">Showroom biped</p>
+      <h1>Mira-7</h1>
+      <p class="lede">
+        Tray robots roll. Mira plants a foot, runs the loop, jumps the amber bars, then dances.
+      </p>
+    </header>
+    <p id="caption">
+      <span id="kicker">HELLO</span>
+      <span id="line">Saying hello.</span>
+    </p>
+    <div id="dock" role="toolbar" aria-label="Routines">
+      <button type="button" data-mode="show" aria-pressed="true">Auto show</button>
+      <button type="button" data-mode="walk">Walk</button>
+      <button type="button" data-mode="run">Run the round</button>
+      <button type="button" data-mode="dance">Dance</button>
+    </div>
+    <p id="hint">Drag to look · scroll to zoom · keys 1–4</p>
+    <pre id="tune" hidden></pre>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
