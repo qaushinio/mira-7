@@ -10,6 +10,7 @@ import {
   smoothstep,
   seg,
 } from "./metrics.js";
+import { anglesFor } from "./g1pose.js";
 
 const WALK = {
   name: "walk",
@@ -714,12 +715,35 @@ export function createDirector(track, robot) {
     framing = "follow";
   }
 
+  function applyG1(dt) {
+    const angles = anglesFor({
+      act,
+      limbMode,
+      phase: gait.phase,
+      run: gaitParams === RUN,
+      jumpState: jump.state,
+      jumpT: jump.t,
+      jumpCrouch: jump.hop.crouch,
+      actTime,
+      danceT: dance.t,
+      time,
+      air: y,
+    });
+    const sink = (spec.pelvisY - 0.66) * 0.25;
+    robot.setRoot(x, robot.standHeight + y + sink, z, yaw, spec.torsoPitch + spec.pelvisPitch, spec.pelvisRoll);
+    robot.setAngles(angles, dt);
+  }
+
   function finalize(dt) {
     if (limbMode === "gait") {
       gait.advance(dt, gaitParams.cadence);
       writeGaitBody(gaitParams);
     } else if (limbMode === "jump") {
       writeJumpBody();
+    }
+    if (robot.kind === "g1") {
+      applyG1(dt);
+      return;
     }
     spec.x = x;
     spec.y = y;

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { createTrack } from "./track.js";
-import { createRobot } from "./robot.js";
+import { loadG1 } from "./g1.js";
 import { createDirector } from "./motion.js";
 
 const canvas = document.getElementById("view");
@@ -197,7 +197,9 @@ for (const [sx, sz] of [
   scene.add(housing);
 }
 
-const robot = createRobot();
+lineEl.textContent = "Loading the Unitree G1.";
+kickerEl.textContent = "LOADING";
+const robot = await loadG1();
 scene.add(robot.root);
 const director = createDirector(track, robot);
 
@@ -230,14 +232,14 @@ let lastY = 0;
 
 function frameCamera(view, dt, snap) {
   if (view.framing === "stage") {
-    desiredLook.set(0, 0.78, 0);
-    desiredPos.set(1.7 * dist, 1.15 * dist, 3.55 * dist);
+    desiredLook.set(0, 1.02, 0);
+    desiredPos.set(1.7 * dist, 1.35 * dist, 3.55 * dist);
   } else {
     const lift = Math.max(0, view.y);
-    desiredLook.set(view.x, 0.88 + lift * 0.72, view.z);
+    desiredLook.set(view.x, 1.08 + lift * 0.72, view.z);
     desiredPos.set(
       view.x + view.hx * 2.55 * dist + view.rx * 2.15 * dist,
-      0.42 + 1.22 * dist + lift * 0.85,
+      0.55 + 1.28 * dist + lift * 0.85,
       view.z + view.hz * 2.55 * dist + view.rz * 2.15 * dist,
     );
   }
@@ -388,6 +390,7 @@ consume(opening);
 frameCamera(opening, 0, true);
 syncButtons();
 resize();
-animate();
+if (params.has("pause")) renderer.render(scene, camera);
+else animate();
 
 window.__mira = { director, robot, track, scene, camera };

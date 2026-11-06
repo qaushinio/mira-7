@@ -77,6 +77,19 @@ h1 {
   line-height: 1.45;
 }
 
+.credit {
+  margin: 8px 0 0;
+  max-width: 38ch;
+  color: rgba(232, 228, 220, 0.55);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+
+.credit a {
+  color: var(--teal);
+}
+
 #caption {
   left: 50%;
   bottom: 108px;
@@ -168,6 +181,7 @@ button:focus-visible {
 @media (max-width: 720px) {
   h1 { font-size: 32px; }
   .lede, #hint { display: none; }
+  .credit { font-size: 11px; max-width: 28ch; }
   header { top: 14px; left: 14px; }
   #caption { bottom: 96px; }
   #dock {
