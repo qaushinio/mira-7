@@ -715,23 +715,110 @@ export function createDirector(track, robot) {
     framing = "follow";
   }
 
+  function soleTarget(src, out) {
+    out.copy(src);
+    out.y = Math.max(0, src.y - M.ankle);
+    return out;
+  }
+
+  function g1JumpFeet() {
+    headingFromYaw(yaw, heading);
+    rightFromYaw(yaw, right);
+    const pelvisY = robot.standHeight + y;
+    if (jump.state === "crouch") {
+      const u = smoothstep(Math.min(1, jump.t / (jump.hop.crouch * 0.9)));
+      targets.footL.lerpVectors(jump.captureL, jump.pinL, u);
+      targets.footR.lerpVectors(jump.captureR, jump.pinR, u);
+      targets.footL.y = M.ankle;
+      targets.footR.y = M.ankle;
+      targets.footPitchL = 0.15 * u;
+      targets.footPitchR = 0.15 * u;
+      return;
+    }
+    if (jump.state === "air") {
+      const k = smoothstep(Math.min(1, jump.t / 0.12));
+      const tuck = jump.isRun ? 0.34 : 0.42;
+      tuckL.set(x, pelvisY - tuck, z).addScaledVector(heading, 0.12).addScaledVector(right, -0.11);
+      tuckR.set(x, pelvisY - tuck, z).addScaledVector(heading, 0.12).addScaledVector(right, 0.11);
+      targets.footL.lerpVectors(jump.pinL, tuckL, k);
+      targets.footR.lerpVectors(jump.pinR, tuckR, k);
+      targets.footL.y = lerp(M.ankle, tuckL.y, k);
+      targets.footR.y = lerp(M.ankle, tuckR.y, k);
+      targets.footPitchL = -0.25;
+      targets.footPitchR = -0.25;
+      return;
+    }
+    const u = smoothstep(Math.min(1, jump.t / 0.16));
+    toWorld(x, 0, z, yaw, 0.02, M.ankle, -0.115, groundL);
+    toWorld(x, 0, z, yaw, 0.02, M.ankle, 0.115, groundR);
+    targets.footL.lerpVectors(jump.airL, groundL, u);
+    targets.footR.lerpVectors(jump.airR, groundR, u);
+    targets.footL.y = lerp(jump.airL.y, M.ankle, u);
+    targets.footR.y = lerp(jump.airR.y, M.ankle, u);
+    targets.footPitchL = lerp(-0.2, 0.08, u);
+    targets.footPitchR = lerp(-0.2, 0.08, u);
+  }
+
   function applyG1(dt) {
-    const angles = anglesFor({
-      act,
-      limbMode,
-      phase: gait.phase,
-      run: gaitParams === RUN,
-      jumpState: jump.state,
-      jumpT: jump.t,
-      jumpCrouch: jump.hop.crouch,
-      actTime,
-      danceT: dance.t,
-      time,
-      air: y,
-    });
-    const sink = (spec.pelvisY - 0.66) * 0.25;
-    robot.setRoot(x, robot.standHeight + y + sink, z, yaw, spec.torsoPitch + spec.pelvisPitch, spec.pelvisRoll);
-    robot.setAngles(angles, dt);
+    headingFromYaw(yaw, heading);
+    rightFromYaw(yaw, right);
+    if (limbMode === "gait") {
+      gait.feet(
+        {
+          stance: gaitParams.stance,
+          step: gaitParams.step,
+          cadence: gaitParams.cadence,
+          heading,
+          right,
+          rootX: x,
+          rootZ: z,
+          ankle: M.ankle,
+          lift: gaitParams.lift,
+          footSide: 0.115,
+        },
+        targets.footL,
+        targets.footR,
+      );
+      const run = gaitParams === RUN;
+      targets.footPitchL = footPitchFor(gait.phase, gaitParams.stance, run);
+      targets.footPitchR = footPitchFor((gait.phase + 0.5) % 1, gaitParams.stance, run);
+    } else if (limbMode === "jump") {
+      g1JumpFeet();
+    }
+    const sink = (spec.pelvisY - 0.66) * 0.45;
+    robot.setRoot(
+      x,
+      robot.standHeight + y + sink,
+      z,
+      yaw,
+      (spec.torsoPitch + spec.pelvisPitch) * 0.7,
+      spec.pelvisRoll,
+    );
+    const airTuck = limbMode === "jump" && jump.state === "air";
+    robot.setAngles(
+      anglesFor({
+        act,
+        limbMode,
+        phase: gait.phase,
+        run: gaitParams === RUN,
+        jumpState: jump.state,
+        jumpT: jump.t,
+        jumpCrouch: jump.hop.crouch,
+        actTime,
+        danceT: dance.t,
+        time,
+        air: y,
+      }),
+      dt,
+      airTuck,
+    );
+    if (!airTuck) {
+      soleTarget(targets.footL, groundL);
+      soleTarget(targets.footR, groundR);
+      robot.solveFeet(groundL, groundR, targets.footPitchL, targets.footPitchR, heading, right);
+    }
+    shownL.copy(targets.footL);
+    shownR.copy(targets.footR);
   }
 
   function finalize(dt) {
@@ -923,7 +1010,7 @@ export function createDirector(track, robot) {
         hz: -Math.sin(yaw),
         rx: Math.sin(yaw),
         rz: Math.cos(yaw),
-        debug: `mode ${mode} act ${act} s ${s.toFixed(2)} y ${y.toFixed(2)} jump ${jump.state} phase ${gait.phase.toFixed(2)}`,
+        debug: `mode ${mode} act ${act} s ${s.toFixed(2)} y ${y.toFixed(2)} jump ${jump.state} phase ${gait.phase.toFixed(2)} foot ${robot.footError?.toFixed?.(3) ?? "-"}`,
       };
     },
     setMode(next) {

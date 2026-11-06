@@ -62,9 +62,9 @@ function gait(angles, ctx) {
   gaitLeg(angles, "left", sidePhase(ctx.phase, "left"), ctx.run);
   gaitLeg(angles, "right", sidePhase(ctx.phase, "right"), ctx.run);
   const cyc = Math.cos(ctx.phase * Math.PI * 2);
-  const amp = ctx.run ? 0.72 : 0.42;
-  arm(angles, "left", 0.22 + cyc * amp, 0.16, 0.7);
-  arm(angles, "right", 0.22 - cyc * amp, 0.16, 0.7);
+  const amp = ctx.run ? 0.9 : 0.55;
+  arm(angles, "left", 0.12 + cyc * amp, 0.22, ctx.run ? 0.55 : 0.4);
+  arm(angles, "right", 0.12 - cyc * amp, 0.22, ctx.run ? 0.55 : 0.4);
   angles.waist_yaw_joint = Math.sin(ctx.phase * Math.PI * 2) * (ctx.run ? 0.1 : 0.05);
 }
 
@@ -80,10 +80,10 @@ function jump(angles, ctx) {
     return;
   }
   if (ctx.jumpState === "air") {
-    leg(angles, "left", 1.2, ctx.run ? 2.05 : 1.8, 0.14);
-    leg(angles, "right", 1.2, ctx.run ? 2.05 : 1.8, 0.14);
-    arm(angles, "left", -0.55, 0.9, 0.5);
-    arm(angles, "right", -0.55, 0.9, 0.5);
+    leg(angles, "left", -1.85, ctx.run ? 2.25 : 1.95, 0.08);
+    leg(angles, "right", -1.85, ctx.run ? 2.25 : 1.95, 0.08);
+    arm(angles, "left", -0.45, 0.55, 0.7);
+    arm(angles, "right", -0.45, 0.55, 0.7);
     angles.waist_yaw_joint = 0;
     return;
   }
